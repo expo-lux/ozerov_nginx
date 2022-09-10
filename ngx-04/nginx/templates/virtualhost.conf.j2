@@ -1,0 +1,16 @@
+server {
+    listen 80;
+    server_name {{ base_domain }};
+
+    location /admin/ {
+        rewrite ^/admin/(.*)$ /adminochka/$1 permanent;
+    }
+
+    location /user/ {
+        rewrite ^/user/(.*)$ /index.php?user=$1;
+    }
+
+    location /index.php { 
+        return 200 "$args";
+    }
+}

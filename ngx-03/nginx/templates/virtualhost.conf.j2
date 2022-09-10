@@ -1,0 +1,19 @@
+server {
+    listen 80;
+    server_name {{ base_domain }};
+
+    location / {
+    #trailing slash on the alias path is essential!!!!!!!!!!!!!! https://stackoverflow.com/questions/10631933/nginx-static-file-serving-confusion-with-root-alias
+        alias /opt/www/{{base_domain}}/;
+        try_files $uri @notfound;
+    }
+
+    location @notfound {
+        return 204;
+    }
+
+    location = /heya.html { 
+        rewrite ^(.*)$ /test3.html break;
+	    root /tmp;
+    }
+}

@@ -1,0 +1,13 @@
+---
+  # - name: delete default
+
+  - name: use template
+    template:
+      src: virtualhost.conf.j2
+      dest: /etc/nginx/sites-enabled/virtualhost.conf
+    notify:
+    - Reload nginx
+
+  
+    
+    

@@ -1,0 +1,57 @@
+- name: "NGX-05"
+  hosts: nginx
+  become: True
+  gather_subset: min
+
+  tasks:
+    - name: "Stop thrash services"
+      systemd:
+        state: stopped
+        name: "{{ item }}"
+        enabled: no
+      loop:
+        - unattended-upgrades
+        - cloud-config
+        - cloud-final
+        - cloud-init-local
+        - cloud-init
+        - apt-daily-upgrade
+        - apt-daily
+        - apt-daily-upgrade.timer
+        - apt-daily.timer
+
+    - name: Wait for automatic system updates or digitalocean agent (droplet-agent) install
+      become: True
+      shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done;
+
+    - name: "Add user to sudoers"
+      copy:
+        content: user ALL=(ALL:ALL) NOPASSWD:ALL
+        dest: /etc/sudoers.d/user
+
+    - name: Install helper packages
+      apt:
+        name:
+          - forkstat
+
+    - name: set site_config to http config
+      set_fact:
+        sites_config:
+          - http.virtualhost.conf
+
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx
+
+    - name: Install letsencrypt and get certs
+      include_role:
+        name: letsencrypt
+
+    - name: set site_config to https config
+      set_fact:
+        sites_config:
+          - https.virtualhost.conf
+
+    - name: Process nginx configs
+      include_role:
+        name: nginx

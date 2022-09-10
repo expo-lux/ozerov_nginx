@@ -1,0 +1,4 @@
+ansible_become_method: sudo
+ansible_become_pass: some_pass
+base_domain: some.domain
+ansible_python_interpreter: /usr/bin/python3

@@ -1,0 +1,25 @@
+- name: "NGX-02"
+  hosts: nginx
+  become: True
+  gather_facts: False
+
+  tasks:
+    - name: "Stop unattended upgrade"
+      become: true
+      systemd:
+        state: stopped
+        name: unattended-upgrades
+    
+    - name: "Install packages"
+      become: True
+      apt:
+        name: 
+          - nginx
+          - forkstat
+
+    - name: Include role
+      include_role:
+        name: nginx
+      
+    
+        

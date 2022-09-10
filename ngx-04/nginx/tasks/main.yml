@@ -1,0 +1,29 @@
+---
+  - name: "Install nginx package"
+    become: True
+    apt:
+      name: 
+        - nginx
+
+  - name: delete default config
+    file: 
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+
+  - name: use nginx.conf
+    template:
+      src: nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify:
+    - Restart nginx
+
+  - name: use template in sites-enabled
+    template:
+      src: virtualhost.conf.j2
+      dest: /etc/nginx/sites-enabled/virtualhost.conf
+    notify:
+    - Reload nginx
+
+  
+    
+    

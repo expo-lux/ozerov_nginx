@@ -1,0 +1,39 @@
+- name: "NGX-04"
+  hosts: nginx
+  become: True
+  gather_facts: False
+
+  tasks:
+    - name: "Stop thrash services"
+      systemd:
+        state: stopped
+        name: "{{ item }}"
+      loop:
+        - unattended-upgrades
+        - cloud-config
+        - cloud-final
+        - cloud-init-local
+        - cloud-init
+
+    - name: Kill unattended
+      shell:  'pgrep unattended |  xargs -r kill -9'
+
+    # - name: Kill apt-get
+    #   shell: "lsof | grep /var/lib/dpkg/lock-frontend | awk '{print $2}' | xargs -r kill -9"
+
+    - name: "Add user to sudoers"
+      copy:
+        content: user ALL=(ALL:ALL) NOPASSWD:ALL
+        dest: /etc/sudoers.d/user
+    
+    - name: "Install packages"
+      apt:
+        name: 
+          - forkstat
+
+    - name: Include role
+      include_role:
+        name: nginx
+      
+    
+        

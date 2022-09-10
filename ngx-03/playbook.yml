@@ -1,0 +1,50 @@
+- name: "NGX-03"
+  hosts: nginx
+  become: True
+  gather_facts: False
+
+  tasks:
+    - name: Kill unattended
+      shell:  'pgrep unattended |  xargs -r kill -9'
+
+    - name: "Stop unattended upgrade"
+      systemd:
+        state: stopped
+        name: unattended-upgrades
+
+    - name: "Add user to sudoers"
+      copy:
+        content: user ALL=(ALL:ALL) NOPASSWD:ALL
+        dest: /etc/sudoers.d/user
+    
+    - name: "Install packages"
+      apt:
+        name: 
+          - forkstat
+    
+    - name: create directory
+      file:
+        path:  /opt/www/{{ base_domain }}
+        state: directory        
+    
+    - name: create file test1
+      copy:
+        content: test1
+        dest: /opt/www/{{ base_domain }}/test1.html
+    
+    - name: create file test2
+      copy:
+        content: test2
+        dest: /opt/www/{{ base_domain }}/test2.html
+
+    - name: create file test3
+      copy:
+        content: test3
+        dest: /tmp/test3.html
+
+    - name: Include role
+      include_role:
+        name: nginx
+      
+    
+        

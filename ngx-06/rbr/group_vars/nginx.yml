@@ -1,4 +1,4 @@
-base_domain: auth.3c2ae08cb2d61a59ef6553cdf0765859.kis.im
+base_domain: some_domain
 auth_file: /etc/nginx/.passwd 
 
 

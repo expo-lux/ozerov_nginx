@@ -1,0 +1,11 @@
+base_domain: auth.3c2ae08cb2d61a59ef6553cdf0765859.kis.im
+auth_file: /etc/nginx/.passwd 
+
+
+htpasswd_credentials:
+  - path: /etc/nginx/.passwd
+    name: user
+    password: 'test'
+    owner: root
+    group: www-data
+    mode: 'u+rw,g+r'

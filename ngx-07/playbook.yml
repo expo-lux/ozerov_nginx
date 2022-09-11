@@ -1,0 +1,139 @@
+- name: "NGX-07"
+  hosts: nginx
+  become: True
+  #gather_facts: no
+  gather_subset: min
+
+  tasks:
+    - name: "Stop thrash services"
+      systemd:
+        state: stopped
+        name: "{{ item }}"
+        enabled: no
+      loop:
+        - unattended-upgrades
+        - cloud-config
+        - cloud-final
+        - cloud-init-local
+        - cloud-init
+        - apt-daily-upgrade
+        - apt-daily
+        - apt-daily-upgrade.timer
+        - apt-daily.timer
+
+    - name: Wait for automatic system updates or digitalocean agent (droplet-agent) install
+      become: True
+      shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done;
+
+    - name: "Add user to sudoers"
+      copy:
+        content: user ALL=(ALL:ALL) NOPASSWD:ALL
+        dest: /etc/sudoers.d/user
+
+    - name: Install helper packages
+      apt:
+        name:
+          - forkstat
+
+    - name: Create CA private key
+      become: False
+      openssl_privatekey:
+        size: 2048
+        path: ./files/ca.key
+      tags: cert
+      delegate_to: 127.0.0.1
+
+    - name: create the CA CSR
+      become: False
+      openssl_csr:
+        path: ./files/ca.csr
+        privatekey_path: ./files/ca.key
+        common_name: "my-ca"
+        #https://github.com/christianb93/tls-certificates
+        #important options https://leftasexercise.com/2020/01/31/understanding-tls-certificates-with-ansible-and-nginx-part-ii/
+        key_usage:
+            - digitalSignature
+            - keyCertSign 
+            - cRLSign
+        key_usage_critical: yes
+        basic_constraints: 
+            - CA:TRUE
+        basic_constraints_critical: yes
+        use_common_name_for_san: false
+      tags: cert
+      delegate_to: 127.0.0.1
+
+    - name: Create simple self-signed CA certificate
+      become: False
+      openssl_certificate:
+        path: ./files/ca.crt
+        csr_path: ./files/ca.csr
+        privatekey_path: ./files/ca.key
+        provider: selfsigned
+      tags: cert
+      delegate_to: 127.0.0.1
+
+    - name: Create client private key
+      become: False
+      openssl_privatekey:
+        size: 2048
+        path: ./files/client.key
+      tags: cert
+      delegate_to: 127.0.0.1
+
+    - name: create the client CSR
+      become: False
+      openssl_csr:
+        path: ./files/client.csr
+        privatekey_path: ./files/client.key
+        common_name: "client"
+      tags: cert
+      delegate_to: 127.0.0.1
+
+    - name: sign CSR with CA
+      become: False
+      openssl_certificate:
+        path: ./files/client.crt
+        csr_path: ./files/client.csr
+        provider: ownca
+        ownca_path: ./files/ca.crt
+        ownca_privatekey_path: ./files/ca.key
+      tags: cert
+      delegate_to: 127.0.0.1
+    
+    - name: set site_config to http config
+      set_fact:
+        sites_config:
+          - http.virtualhost.conf
+
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx
+
+    # - name: Install letsencrypt and get certs
+    #   include_role:
+    #     name: letsencrypt
+
+    - name: create dir for CA
+      file:
+        path: /opt/ssl
+        state: directory
+    
+    - name: copy CA.crt
+      copy:
+        dest: /opt/ssl/{{ item }}
+        src:  ./files/{{ item }}
+      loop: 
+        - ca.crt
+        - ca.key
+        - client.crt
+        - client.key
+        
+    - name: set site_config to https config
+      set_fact:
+        sites_config:
+          - https.virtualhost.conf
+
+    - name: Process nginx configs
+      include_role:
+        name: nginx

@@ -110,9 +110,9 @@
       include_role:
         name: nginx
 
-    # - name: Install letsencrypt and get certs
-    #   include_role:
-    #     name: letsencrypt
+    - name: Install letsencrypt and get certs
+      include_role:
+        name: letsencrypt
 
     - name: create dir for CA
       file:

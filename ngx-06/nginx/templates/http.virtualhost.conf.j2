@@ -1,0 +1,19 @@
+server {
+    listen 80;
+    server_name {{ base_domain }};
+
+    location /auth/off {
+        auth_basic off;   
+        try_files NONEXISTENT @return200;
+    }
+
+    location / {
+        auth_basic "TEST";
+        auth_basic_user_file {{ auth_file }};
+        try_files NONEXISTENT @return200;
+    }
+
+    location @return200 {
+        return 200 "$args";
+    }
+}

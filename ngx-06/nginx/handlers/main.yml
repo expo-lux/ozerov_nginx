@@ -1,0 +1,31 @@
+---
+#https://github.com/jdauphant/ansible-role-nginx
+  - name: Reload nginx
+    debug: msg="checking config first"
+    changed_when: True
+    notify:
+      - check nginx configuration
+      - reload nginx - after config check
+  
+  - name: Restart nginx
+    debug: msg="checking config first"
+    changed_when: True
+    notify:
+      - check nginx configuration
+      - restart nginx - after config check
+
+  - name: check nginx configuration
+    command: "nginx -t"
+    register: result
+    changed_when: "result.rc != 0"
+    check_mode: no
+
+  - name: reload nginx - after config check
+    systemd: 
+      name: nginx
+      state: reloaded
+  
+  - name: restart nginx - after config check
+    systemd: 
+      name: nginx
+      state: restarted

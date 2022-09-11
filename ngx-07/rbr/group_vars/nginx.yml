@@ -1,0 +1,11 @@
+base_domain: tls.dd85dc40710940052de52e8d3e620dc3.kis.im
+
+letsencrypt_opts_extra: "--register-unsafely-without-email"
+letsencrypt_dns_challenge: no
+letsencrypt_cert:
+  name: tls.dd85dc40710940052de52e8d3e620dc3.kis.im
+  domains:
+    - tls.dd85dc40710940052de52e8d3e620dc3.kis.im
+  challenge: http
+  http_auth: webroot
+  webroot_path: /opt/www/acme

@@ -1,0 +1,15 @@
+server {
+    listen 80;
+    server_name {{ base_domain }};
+
+    #почему-то try_files и add_header не работают вместе - не добавляется заголовок
+    location /country {
+        add_header X-Country $geoip_country_code3;
+        return 200 $request_uri;
+    }
+
+    location /name {
+        add_header X-Country-Name $geoip_country_name;
+        return 200 $request_uri;
+    }
+}

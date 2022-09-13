@@ -1,0 +1,29 @@
+- name: "NGX-09"
+  hosts: localhost
+  become: True
+  gather_facts: no
+
+  tasks:
+    - name: set site_config to http config
+      set_fact:
+        sites_config:
+          - http.virtualhost.conf
+
+    - name: use template in sites-enabled
+      template:
+        src: "{{ playbook_dir }}/docker/templates/{{ item }}.j2"
+        dest: "{{ playbook_dir }}/docker/configs/{{ item }}"
+      loop: "{{ sites_config }}"
+
+
+    - name: Start NGINX container 
+      community.docker.docker_container:
+        auto_remove: yes
+        detach: yes
+        volumes:
+          - "{{playbook_dir}}/docker/configs:/etc/nginx/sites-enabled"
+          - "{{playbook_dir}}/files/nginx.conf:/etc/nginx/nginx.conf"
+        published_ports:
+          - 80:80
+        image: "ubuntu/nginx"
+        name: "nginx"

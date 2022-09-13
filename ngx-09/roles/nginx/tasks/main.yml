@@ -1,0 +1,36 @@
+---
+  - name: "Install packages"
+    become: True
+    apt:
+      name: 
+        - nginx
+        - apache2-utils
+        - libnginx-mod-http-geoip
+
+  - name: delete default config
+    file: 
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+
+  - name: use nginx.conf
+    template:
+      src: nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify:
+    - Restart nginx
+
+  - name: use template in sites-enabled
+    template:
+      src: "{{ item }}.j2"
+      dest: "/etc/nginx/sites-enabled/{{ item }}"
+    loop: "{{ sites_config }}"
+
+    notify:
+    - Reload nginx
+  
+  - name: Flush handlers
+    meta: flush_handlers
+
+  
+    
+    

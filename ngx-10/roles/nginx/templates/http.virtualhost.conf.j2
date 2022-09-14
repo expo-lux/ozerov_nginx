@@ -1,0 +1,49 @@
+upstream backend {
+  server 127.0.0.1:81;
+  server 127.0.0.1:82;
+
+  check interval=1000 rise=1 fall=2 timeout=1000 type=http;
+  check_http_send "GET /status HTTP/1.0\r\n\r\n";
+  check_http_expect_alive http_2xx http_3xx;
+}
+
+server {
+  listen 81 default_server;
+  error_log /var/log/nginx/1error_back.log debug;
+
+  location / {
+      return 201 $args;
+  }
+
+  location = /status {
+      return 200 $args;
+  }
+}
+
+server {
+  listen 82 default_server;
+  error_log /var/log/nginx/2error_back.log debug;
+
+  location / {
+      return 202 $args;
+  }
+
+  location = /status {
+      return 200 $args;
+  }
+}
+
+server {
+  listen 80;
+  server_name {{ base_domain }};
+
+  location / {
+    proxy_pass http://backend;
+    proxy_connect_timeout 120s;
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
+
+    proxy_set_header X-Country $geoip2_data_country_code;
+    add_header X-Internal-Country $geoip2_data_country_code always;
+  }
+}

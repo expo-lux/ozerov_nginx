@@ -1,0 +1,5 @@
+[nginx]
+backend.382130b094d2233b5de9bc93775a85f9.kis.im ansible_become_pass=gppuxelstxmy ansible_user=user
+
+[runner]
+localhost 

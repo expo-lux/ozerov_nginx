@@ -1,0 +1,88 @@
+
+- name: "NGX-10"
+  hosts: nginx
+  become: True
+  gather_subset: min
+
+  tasks:
+    - name: set base_domain
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"
+
+    - name: unattended
+      shell: sed -i "s/\".\"/\"0\"/g" /etc/apt/apt.conf.d/20auto-upgrades
+    
+    - name: droplet-agent
+      file:
+        path: /etc/cron.hourly/droplet-agent
+        state: absent 
+
+    - name: Set timezone 
+      timezone:
+        name: Europe/Moscow
+
+    - name: "Stop thrash services"
+      systemd:
+        state: stopped
+        name: "{{ item }}"
+        enabled: no
+      loop:
+        - unattended-upgrades
+        - cloud-config
+        - cloud-final
+        - cloud-init-local
+        - cloud-init
+        - apt-daily-upgrade
+        - apt-daily
+        - apt-daily-upgrade.timer
+        - apt-daily.timer
+
+    - name: Wait for automatic system updates or digitalocean agent (droplet-agent) install
+      become: True
+      shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done;
+
+    - name: "Add user to sudoers"
+      copy:
+        content: user ALL=(ALL:ALL) NOPASSWD:ALL
+        dest: /etc/sudoers.d/user
+
+    - name: Install helper packages
+      apt:
+        name:
+          - forkstat
+    
+    - name: Create dir for GeoIP
+      file:
+        path: /var/lib/GeoIP
+        state: directory
+
+    - name: Extract GeoCity 
+      unarchive:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        remote_src: yes
+      loop:
+        - { src: 'https://files.rebrainme.com/workshops/nginx/GeoLite2-City_20220527.tar', dest: '/opt' }
+        - { src: 'https://files.rebrainme.com/workshops/nginx/GeoLite2-Country_20220527.tar', dest: '/opt' }
+      tags: files
+
+    - name: Copy files from foo to bar
+      copy: 
+        remote_src: True
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop: 
+        - { src: '/opt/GeoLite2-City_20220527/GeoLite2-City.mmdb', dest: '/var/lib/GeoIP/GeoLite2-City.mmdb' }
+        - { src: '/opt/GeoLite2-Country_20220527/GeoLite2-Country.mmdb', dest: '/var/lib/GeoIP/GeoLite2-Country.mmdb' }
+      tags: files
+
+    
+
+    - name: set site_config to http config
+      set_fact:
+        sites_config:
+          - http.virtualhost.conf
+
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx

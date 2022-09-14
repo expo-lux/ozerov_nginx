@@ -1,0 +1,3 @@
+custom_packages:
+  - nginx-core_1.18.0-0ubuntu1.3_amd64.deb
+  - libnginx-mod-http-geoip2_1.18.0-0ubuntu1.3_amd64.deb

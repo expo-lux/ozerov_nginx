@@ -1,0 +1,46 @@
+- name: "NGX-10"
+  hosts: nginx
+  gather_facts: no
+
+  tasks:
+    - name: set base_domain
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"
+      
+    - name: run test on specified host
+      set_fact:
+        test_host: "{{ groups['runner'][0] }}"
+
+    - name: test 6 "http://{{ base_domain}}:81/test"
+      uri:
+        url: "http://{{ base_domain}}:81/test"
+        status_code: [201]
+      delegate_to: "{{ test_host }}"
+
+    - name: test 6 "http://{{ base_domain}}:82/test"
+      uri:
+        url: "http://{{ base_domain}}:82/test"
+        status_code: [202]
+      delegate_to: "{{ test_host }}"
+
+    - name: test 6 "http://{{ base_domain}}:81/status"
+      uri:
+        url: "http://{{ base_domain}}:81/status"
+        status_code: [200]
+      delegate_to: "{{ test_host }}"
+
+    - name: test 6 "http://{{ base_domain}}:82/status"
+      uri:
+        url: "http://{{ base_domain}}:82/status"
+        status_code: [200]
+      delegate_to: "{{ test_host }}"
+
+    - name: test 7, 10 "http://{{ base_domain}}/test"
+      uri:
+        url: "http://{{ base_domain}}/test"
+        status_code: [201,202]
+      register: response
+      delegate_to: "{{ test_host }}"
+      failed_when: '"x_internal_country" not in response or "RU" not in response.x_internal_country'
+      loop: "{{ range(4) | list }}"     
+      

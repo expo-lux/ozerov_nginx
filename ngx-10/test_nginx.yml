@@ -1,4 +1,4 @@
-- name: "NGX-10"
+- name: "NGX-10 tests"
   hosts: nginx
   gather_facts: no
 

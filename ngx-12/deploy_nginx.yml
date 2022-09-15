@@ -1,0 +1,64 @@
+
+- name: "NGX-12"
+  hosts: nginx
+  become: True
+  gather_subset: min
+
+  tasks:
+    - name: set base_domain
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"
+
+    - name:
+      shell: "pgrep unattended | xargs -r kill -9"
+
+    - name: Stop auto-upgrades
+      shell: sed -i "s/\".\"/\"0\"/g" /etc/apt/apt.conf.d/20auto-upgrades
+    
+    - name: Remove droplet-agent job from cron
+      file:
+        path: /etc/cron.hourly/droplet-agent
+        state: absent 
+
+    - name: Set timezone 
+      timezone:
+        name: Europe/Moscow
+
+    - name: Stop thrash services
+      systemd:
+        state: stopped
+        name: "{{ item }}"
+        enabled: no
+      loop:
+        - unattended-upgrades
+        - cloud-config
+        - cloud-final
+        - cloud-init-local
+        - cloud-init
+        - apt-daily-upgrade
+        - apt-daily
+        - apt-daily-upgrade.timer
+        - apt-daily.timer
+
+    - name: Wait for automatic system updates or digitalocean agent (droplet-agent) install
+      become: True
+      shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done;
+
+    - name: Add user to sudoers
+      copy:
+        content: user ALL=(ALL:ALL) NOPASSWD:ALL
+        dest: /etc/sudoers.d/user
+
+    - name: Install helper packages
+      apt:
+        name:
+          - forkstat  
+
+    - name: Set site_config variable
+      set_fact:
+        sites_config:
+          - http.virtualhost.conf
+
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx

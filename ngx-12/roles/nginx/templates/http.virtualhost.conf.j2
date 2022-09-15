@@ -1,0 +1,33 @@
+#
+map $geoip_country_code $blocked {
+    default block;
+
+    ru allow;
+    ua allow;
+    us allow;
+}
+
+
+server {
+    listen 80 default_server;
+    server_name {{ base_domain }};
+
+    if ($http_origin ~* "example.org") {
+        set $allowed "origin";
+    }
+
+    if ($request_method = GET) {
+        set $allowed "${allowed}get";
+    }
+
+    location / {
+        if ($allowed = "originget") {
+            add_header Access-Control-Allow-Origin "https://example.org/" always;
+        }
+        return 200;
+    }
+
+    location = /index.html {
+        root /usr/share/nginx/html/;
+    }
+}

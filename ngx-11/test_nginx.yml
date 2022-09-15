@@ -1,0 +1,23 @@
+- name: "NGX-11 tests"
+  hosts: nginx
+  gather_facts: no
+
+  tasks:
+    - name: Set base_domain variable
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"
+      
+    - name: Set home_host variable
+      set_fact:
+        home_host: "{{ groups['runner'][0] }}"
+
+    - name: Test 2 - request "http://{{ base_domain}}/index.html" from RU, response 200
+      uri:
+        url: "http://{{ base_domain}}/index.html"
+        status_code: [200]
+      delegate_to: "{{ home_host }}" #call from ru host
+
+    - name: Test 4 - request "http://{{ base_domain}}/index.html" from NL, response 403
+      uri:
+        url: "http://{{ base_domain}}/index.html"
+        status_code: [403]

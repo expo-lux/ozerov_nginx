@@ -1,0 +1,49 @@
+- name: "NGX-12 tests"
+  hosts: nginx
+  gather_facts: no
+
+  tasks:
+    - name: Set base_domain variable
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"
+      
+    - name: Set home_host variable
+      set_fact:
+        home_host: "{{ groups['runner'][0] }}"
+
+    - name: Test 2.1 - send get request "http://{{ base_domain}} and check Access-Control-Allow-Origin not in headers"
+      uri:
+        url: "http://{{ base_domain}}"
+        status_code: [200]
+      register: response
+      delegate_to: "{{ home_host }}"
+      failed_when: '"access_control_allow_origin" in response'
+
+    - name: Test 2.2 - send post request "http://{{ base_domain}} and check Access-Control-Allow-Origin not in headers"
+      uri:
+        url: "http://{{ base_domain}}"
+        method: POST
+        body: ""
+        headers:
+          Origin: https://example.org/
+        status_code: [200]
+      register: response
+      delegate_to: "{{ home_host }}"
+      failed_when: '"access_control_allow_origin" in response'
+
+    - name: Test 2.2 - send get request "http://{{ base_domain}} and check Access-Control-Allow-Origin in headers when Origin=https://example.org"
+      uri:
+        url: "http://{{ base_domain}}"
+        status_code: [200]
+        headers:
+          Origin: https://example.org/
+      register: response
+      delegate_to: "{{ home_host }}"
+      failed_when: '"access_control_allow_origin" not in response or "https://example.org/" not in response.access_control_allow_origin'
+
+
+    - name: Test 2.5 - send get request "http://{{ base_domain}}/test" and check status code
+      uri:
+        url: "http://{{ base_domain}}/test"
+        status_code: [200]
+      delegate_to: "{{ home_host }}"

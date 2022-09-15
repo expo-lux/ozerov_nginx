@@ -1,0 +1,11 @@
+base_domain: test.domain
+
+letsencrypt_opts_extra: "--register-unsafely-without-email"
+letsencrypt_dns_challenge: no
+letsencrypt_cert:
+  name: some_domain
+  domains:
+    - some_domain
+  challenge: http
+  http_auth: webroot
+  webroot_path: /opt/www/acme

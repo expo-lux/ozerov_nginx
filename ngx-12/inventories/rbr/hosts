@@ -1,0 +1,5 @@
+[nginx]
+api.bef2e04442e6ea34dd53112ee911ed8f.kis.im ansible_become_pass=lriwydtgzdwm ansible_user=user
+
+[runner]
+localhost 

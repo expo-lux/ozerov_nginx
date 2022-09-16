@@ -1,0 +1,15 @@
+server {
+    listen 80 default_server;
+    server_name {{ base_domain }};
+
+    location /rebrain {
+        proxy_pass https://rebrainme.com/;
+        proxy_connect_timeout 120s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+
+    location /test {
+        return 201 "$args";
+    }
+}

@@ -1,0 +1,27 @@
+
+- name: "NGX-13"
+  hosts: nginx
+  become: True
+  gather_subset: min
+
+  tasks:
+    - name: set base_domain
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"  
+
+    - name: Set site_config variable
+      set_fact:
+        sites_config:
+          - http.virtualhost.conf
+
+    - name: Prepare host
+      include_role:
+        name: initial
+
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx
+
+    - name: Install nginx-exporter
+      include_role:
+        name: nginxlog-exporter

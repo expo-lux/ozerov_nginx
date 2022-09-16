@@ -1,0 +1,5 @@
+[nginx]
+log.4c9b37050f467ceeebe26b878557edef.kis.im ansible_become_pass=saaiqysrcnyw ansible_user=user
+
+[runner]
+localhost

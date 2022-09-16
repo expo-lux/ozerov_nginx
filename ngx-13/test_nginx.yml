@@ -1,0 +1,39 @@
+- name: "NGX-13 tests"
+  hosts: nginx
+  gather_facts: no
+
+  tasks:
+    - name: Set base_domain variable
+      set_fact:
+        base_domain: "{{ inventory_hostname }}"
+      
+    - name: Set home_host variable
+      set_fact:
+        home_host: "{{ groups['runner'][0] }}"
+
+    - name: restart nginxlog_exporter
+      become: true
+      systemd:
+        # daemon_reload: true
+        name: prometheus-nginxlog-exporter
+        state: restarted
+
+    - name: Send 4 get request to "http://{{ base_domain}}/test"
+      uri:
+        url: "http://{{ base_domain}}/test"
+        status_code: [201]
+      delegate_to: "{{ home_host }}"
+      loop: "{{ range(4) | list }}"
+
+    - name: get metrics page
+      uri:
+        url: "http://{{ base_domain}}:{{ nginx_exporter_port }}/metrics"
+        status_code: [200]
+        return_content: yes
+      register: response
+      delegate_to: "{{ home_host }}"
+
+    - name: check nginx_http_response_count_total{app="default",method="",status="201"} metric equals 4
+      set_fact:
+        count: "{{ response.content | regex_search('nginx_http_response_count_total{.*status=\"201\"} ([0-9]+)', '\\1', multiline=True, ignorecase=True) | join('') }}"
+      failed_when: count != '4'

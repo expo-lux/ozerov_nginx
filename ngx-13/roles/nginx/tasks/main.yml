@@ -1,0 +1,55 @@
+---
+  - name: "Install packages"
+    become: True
+    apt:
+      name: 
+        - apache2-utils
+        - libnginx-mod-http-geoip
+        - geoipupdate
+
+  - name: Copy custom nginx packages
+    copy:
+      dest: /opt
+      src:  "{{ item }}"
+    loop: "{{ custom_packages }}"
+    when: custom_packages is defined
+    
+  - name: Install nginx packages
+    apt:
+      deb: "/opt/{{ item }}"
+    loop: "{{ custom_packages }}"
+    when: custom_packages is defined
+
+  - name: "Install nginx"
+    become: True
+    apt:
+      name: 
+        - nginx
+    when: custom_packages is not defined
+
+  - name: delete default config
+    file: 
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+
+  - name: use nginx.conf
+    template:
+      src: nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify:
+    - Restart nginx
+
+  - name: use template in sites-enabled
+    template:
+      src: "{{ item }}.j2"
+      dest: "/etc/nginx/sites-enabled/{{ item }}"
+    loop: "{{ sites_config }}"
+    notify:
+    - Reload nginx
+  
+  - name: Flush handlers
+    meta: flush_handlers
+
+  
+    
+    

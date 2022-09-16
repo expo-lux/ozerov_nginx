@@ -1,0 +1,1 @@
+Цель - экспортировать метрики nginx в формате prometheus. Метрики предоставляет экспортер https://github.com/martin-helmich/prometheus-nginxlog-exporter на основе анализа access-логов

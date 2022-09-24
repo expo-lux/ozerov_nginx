@@ -1,0 +1,27 @@
+---
+  - name: copy application
+    uri:
+      url: https://rebrainme-workshop-apps.s3.amazonaws.com/nginx/whoami
+      dest:  /opt
+      mode: 0755
+      status_code: [200, 304]
+
+  - name: create systemd service unit
+    template:
+      src: whoami.service.j2
+      dest: /etc/systemd/system/whoami.service
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart whoami service
+
+  - name: block 8080 port 
+    iptables:
+      chain: INPUT
+      in_interface: eth0
+      protocol: tcp
+      destination_port: "8080"
+      jump: DROP
+
+  - name: Flush handlers
+    meta: flush_handlers

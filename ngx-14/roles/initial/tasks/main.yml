@@ -1,0 +1,45 @@
+---
+  - name: Kill unattended-upgrades process
+    shell: "pgrep unattended | xargs -r kill -9"
+
+  - name: Stop auto-upgrades
+    copy:
+      dest: /etc/apt/apt.conf.d/20auto-upgrades
+      src:  20auto-upgrades
+  
+  - name: Remove droplet-agent job from cron
+    file:
+      path: /etc/cron.hourly/droplet-agent
+      state: absent 
+
+  - name: Set timezone 
+    timezone:
+      name: Europe/Moscow
+
+  - name: Stop thrash services
+    systemd:
+      state: stopped
+      name: "{{ item }}"
+      enabled: no
+    loop:
+      - unattended-upgrades
+      - cloud-config
+      - cloud-final
+      - cloud-init-local
+      - cloud-init
+      - apt-daily-upgrade.timer
+      - apt-daily.timer
+
+  - name: Wait for automatic system updates or digitalocean agent (droplet-agent) install
+    become: True
+    shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done;
+
+  - name: Add user to sudoers
+    copy:
+      content: "{{ ansible_user }} ALL=(ALL:ALL) NOPASSWD:ALL"
+      dest: /etc/sudoers.d/{{ ansible_user }}
+
+  - name: Install helper packages
+    apt:
+      name:
+        - forkstat  

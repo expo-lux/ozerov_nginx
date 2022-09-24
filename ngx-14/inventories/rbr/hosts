@@ -1,0 +1,12 @@
+[master_loadbalancer]
+lb1.04aff587bc0fcd4ea34ba57420d093b6.kis.im ansible_become_pass=wysinyieyoip ansible_user=user
+
+[slave_loadbalancer]
+lb2.04aff587bc0fcd4ea34ba57420d093b6.kis.im ansible_become_pass=divjdfovciag ansible_user=user
+
+[app]
+app1.04aff587bc0fcd4ea34ba57420d093b6.kis.im ansible_become_pass=oswwtlrxkdwe ansible_user=user
+app2.04aff587bc0fcd4ea34ba57420d093b6.kis.im ansible_become_pass=fhfhdespkntg ansible_user=user
+
+[runner]
+localhost

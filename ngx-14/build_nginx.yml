@@ -1,0 +1,39 @@
+- name: "Prepare for NGX-14"
+  hosts: runner
+  gather_facts: no
+
+  tasks:
+  #билдим образ
+  - name: Build image with build args
+    docker_image:
+      name: nginx_upstream_check_module_realip
+      state: present
+      build:
+        path: "{{ playbook_dir }}"
+      source: build
+    tags:
+      - build
+  
+  #создаем контейнер
+  - name: Create container for copy deb package
+    docker_container:
+      state: present
+      image: nginx_upstream_check_module_realip
+      name: temp_nginx_container
+    tags: build
+
+  #копируем nginx-core, nginx-geoip2 в папку files
+  - name: Copy packages from container to files directory
+    shell: docker cp temp_nginx_container:/opt/{{ item }} {{ playbook_dir }}/files
+    loop:
+      - libnginx-mod-http-geoip2_1.18.0-0ubuntu1.3_amd64.deb
+      - nginx-core_1.18.0-0ubuntu1.3_amd64.deb
+    tags: build
+  
+  #удаляем контейнер
+  - name: Remove temp container
+    docker_container:
+      state: absent
+      name: temp_nginx_container
+      keep_volumes: no
+    tags: build

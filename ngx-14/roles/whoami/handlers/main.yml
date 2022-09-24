@@ -1,0 +1,7 @@
+---
+
+- name: restart whoami service
+  systemd:
+    daemon_reload: true
+    name: whoami.service
+    state: restarted

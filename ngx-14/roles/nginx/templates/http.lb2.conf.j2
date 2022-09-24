@@ -1,0 +1,17 @@
+server {
+    listen 80 default_server;
+    server_name {{ base_domain }} {{ inventory_hostname }} _;
+
+    location /.well-known/ {
+        proxy_pass http://{{ nginx_proxy_well_known_to }}/.well-known/;
+        proxy_http_version      1.1;
+        proxy_set_header X-Forwarded-For        $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 30s;
+        proxy_read_timeout 30s;
+        proxy_send_timeout 30s;
+    }
+
+    location / {
+        return 301 https://{{ base_domain}}$request_uri;
+    }
+}

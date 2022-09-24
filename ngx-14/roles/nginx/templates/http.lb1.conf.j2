@@ -1,0 +1,14 @@
+server {
+    listen 80 default_server;
+    server_name {{ base_domain }} {{ inventory_hostname }} _;
+    real_ip_header X-Forwarded-For;
+    set_real_ip_from {{ nginx_set_real_ip_from }};
+
+    location /.well-known/ {
+        alias /opt/www/acme/.well-known/;
+    }
+
+    location / {
+        return 301 https://{{ base_domain}}$request_uri;
+    }
+}

@@ -1,0 +1,25 @@
+---
+  - name: download nginxlog-exporter
+    get_url:
+      url:  https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+      dest:  /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+  
+  - name: install deb
+    apt:      
+      state: present
+      deb:  /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb      
+
+  - name: remove deb
+    file:
+      path:  /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+      state: absent
+
+  - name: config
+    template:
+      src: "prometheus-nginxlog-exporter.hcl.j2"
+      dest: "/etc/prometheus-nginxlog-exporter.hcl"
+    notify: 
+    - restart nginxlog_exporter
+
+  - name: Flush handlers
+    meta: flush_handlers

@@ -1,0 +1,13 @@
+listen {
+  port = {{ nginx_exporter_port }}
+}
+
+namespace "nginx" {
+  source_files = ["{{ nginx_log_path }}"]
+
+  format = "{{ nginx_log_format | replace('\"','\\"') }}"
+
+  labels {
+    app = "default"
+  }
+}

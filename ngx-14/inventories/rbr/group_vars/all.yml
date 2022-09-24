@@ -1,0 +1,8 @@
+ansible_python_interpreter: /usr/bin/python3
+ansible_become_method: sudo
+
+base_domain: app.04aff587bc0fcd4ea34ba57420d093b6.kis.im 
+
+nginx_log_path: /var/log/nginx/app.access.log
+nginx_log_format: '"$request" $request_time $upstream_response_time'
+nginx_exporter_port: 8080

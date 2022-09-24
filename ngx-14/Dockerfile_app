@@ -1,0 +1,7 @@
+FROM frolvlad/alpine-glibc:alpine-3.16
+WORKDIR /opt
+ADD https://rebrainme-workshop-apps.s3.amazonaws.com/nginx/whoami /opt
+RUN chmod +x /opt/whoami
+
+EXPOSE 8080
+CMD ["/opt/whoami", "-port", "8080"]

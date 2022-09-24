@@ -1,0 +1,28 @@
+server {
+    listen 80 default_server;
+    real_ip_header X-Forwarded-For;
+    {% for host in groups['master_loadbalancer'] -%}
+    set_real_ip_from {{ host }};
+    {% endfor %}
+    {%- for host in groups['slave_loadbalancer'] -%}
+    set_real_ip_from {{ host }};
+    {% endfor -%}    
+    server_name {{ inventory_hostname }};
+
+    if ($http_x_forwarded_for = "") {
+        set $chain $realip_remote_addr;
+    }
+    if ($http_x_forwarded_for != "") {
+        set $chain "$http_x_forwarded_for, $realip_remote_addr";
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version      1.1;
+        proxy_set_header Host   $host;
+        proxy_set_header X-Forwarded-For   $chain;
+        proxy_connect_timeout 30s;
+        proxy_read_timeout 30s;
+        proxy_send_timeout 30s;
+    }
+}

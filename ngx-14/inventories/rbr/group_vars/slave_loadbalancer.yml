@@ -1,0 +1,8 @@
+custom_packages:
+  - nginx-core_1.18.0-0ubuntu1.3_amd64.deb
+  - libnginx-mod-http-geoip2_1.18.0-0ubuntu1.3_amd64.deb
+
+
+letsencrypt_opts_extra: "--register-unsafely-without-email"
+letsencrypt_dns_challenge: no
+letsencrypt_test: yes

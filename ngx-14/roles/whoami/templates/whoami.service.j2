@@ -1,0 +1,11 @@
+[Unit]
+Description=Whoami
+After=network.target
+
+[Service]
+PrivateTmp=true
+Type=simple
+ExecStart=/opt/whoami --port 8080
+
+[Install]
+WantedBy=multi-user.target

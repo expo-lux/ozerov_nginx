@@ -1,0 +1,174 @@
+- name: Prepare
+  hosts: all, !runner
+  become: True
+  # gather_subset: min
+  tags:
+    - initial
+    - tt
+
+  tasks:
+    - name: initial
+      include_role:
+        name: initial
+
+- name: "Prepare for certificate request on lb1"
+  hosts: master_loadbalancer
+  become: True
+  gather_facts: no
+  gather_subset: min
+  tags: tt
+
+  tasks:
+    - name: Set site_config variable
+      set_fact:
+        sites_config:
+          - http.lb1.conf
+
+    - name: Set nginx_slave
+      set_fact:
+        nginx_set_real_ip_from: "{{ groups['slave_loadbalancer'][0] }}"
+          
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx        
+
+- name: "Prepare for certificate request on lb2"
+  hosts: slave_loadbalancer
+  become: True
+  gather_facts: no
+  # gather_subset: min
+  # tags: tt
+
+  tasks:
+    - name: Set site_config variable
+      set_fact:
+        sites_config:
+          - http.lb2.conf          
+
+    - name: Set nginx_proxy_well_known_to variable
+      set_fact:
+        nginx_proxy_well_known_to: "{{ groups['master_loadbalancer'][0] }}"
+
+    - name: Install nginx and process configs
+      include_role:
+        name: nginx        
+
+    - name: Install letsencrypt
+      include_role:
+        name: letsencrypt
+
+
+
+- name: Setup https on master
+  hosts: master_loadbalancer
+  become: True
+  gather_facts: no
+  # gather_subset: min
+  tags:
+    - exporter
+
+  tasks:
+
+    - name: Install letsencrypt and get certs
+      include_role:
+        name: letsencrypt
+
+    - name: set site_config to https config
+      set_fact:
+        sites_config:
+          - https.lb.conf
+
+    - name: process nginx configs
+      include_role:
+        name: nginx
+
+    - name: install nginx-exporter
+      include_role:
+        name: nginxlog-exporter
+      tags: 
+        - exporter
+
+
+
+- name: Install lsyncd
+  hosts: master_loadbalancer, slave_loadbalancer
+  become : True
+  gather_facts: no
+  # gather_subset: min
+  tags: 
+    - lsyncd
+    - initial
+  vars:
+    lsyncd_master_hostname: "{{ groups['master_loadbalancer'][0] }}"
+    lsyncd_slave_hosts:
+      - "{{ groups['slave_loadbalancer'][0] }}"
+    lsyncd_sources_and_targets:
+      - source: /etc/letsencrypt/archive
+        target: /etc/letsencrypt/archive
+      - source: /etc/letsencrypt/live
+        target: /etc/letsencrypt/live
+
+  tasks:
+    - name: setup lsyncd      
+      import_role:
+        name: lsyncd 
+
+    - name: wait for sync
+      wait_for:
+        path: "/etc/letsencrypt/archive/{{ base_domain }}"
+        state: present
+        msg: Timeout to find file /tmp/foo
+      when: inventory_hostname != lsyncd_master_hostname
+
+- name: Setup https on slave
+  hosts: slave_loadbalancer
+  gather_facts: no
+  become: True
+  tasks:
+  - name: set site_config to https config
+    set_fact:
+      sites_config:
+        - https.lb.conf
+
+  - name: Process nginx configs
+    include_role:
+      name: nginx
+
+  - name: Install nginx-exporter
+    include_role:
+      name: nginxlog-exporter
+
+- name: Prepare
+  hosts: all, !runner
+  become: True
+  gather_facts: yes
+  tags: app
+  tasks:
+
+- name: Setup app
+  hosts: app
+  become: True
+  gather_facts: yes
+  tags: app
+  
+
+  tasks:
+    - name: Install whoami 
+      include_role:
+        name: whoami
+
+    - name: set site_config variable
+      set_fact:
+        sites_config:          
+          - http.app.conf
+      tags: app
+
+    - name: Process nginx configs
+      include_role:
+        name: nginx
+      tags: app
+    
+
+    
+      
+    
